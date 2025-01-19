@@ -1,6 +1,6 @@
 {
   "name": "xcn-waterfall",
-  "private": true,
+  "private": false,
   "version": "0.9.0",
   "type": "module",
   "main": "dist/xcn-waterfall.umd.js",

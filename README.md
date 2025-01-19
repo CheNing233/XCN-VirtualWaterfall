@@ -32,167 +32,41 @@ import {useXCNWaterfallItem, XCNWaterfall} from "xcn-waterfall";
 
 ```tsx
 <XCNWaterfall
+  // 初始数据
   data={data}
-  onRequestMore={handleRequestMore}
-  bottomComponent={<h3>waterfall bottom</h3>}
+  // 列数
+  columnsGroup={{
+    xs: 1,
+    sm: 2,
+    md: 3,
+    lg: 4,
+  }}
+  onRequestBottomMore={handleRequestMore}
+  bottomCompRenderFn={(reqCount: number, isLoading: boolean, isFinished: boolean) => (
+    <h4 style={{
+      color: 'yellow',
+      textAlign: 'center'
+    }}>waterfall bottom | reqCount {reqCount} | isLoading {`${isLoading}`} | isFinished {`${isFinished}`}</h4>
+  )}
   style={{
-    height: '80vh',
     width: '80vw',
+    height: '80vh'
   }}
 />
 ```
+
+### Tips
+
+- 使用`useXCNWaterfallItem`钩子动态更改单个项目渲染，比如单个卡片内的计数器
+- 优先使用`columnsGroup`属性设置列数，如果没有该属性，则使用`columns`属性，响应式是基于容器宽度而不是window宽度
+
 ### Full Example
 
 可查看`src/example`目录
 
-```tsx
-// src/example/example-1.tsx
-
-import {useState} from "react";
-
-// some tools
-import {generateRandomId, generateRandomObjects} from "./tools.ts";
-
-import {useXCNWaterfallItem, XCNWaterfall} from "xcn-waterfall";
-
-// build your item component
-export function Comp(props: any) {
-  const {item, updateItem} = useXCNWaterfallItem(props.name)
-  const [count, setCount] = useState(0)
-
-  return (
-    <div {...props}>
-      {props.name}
-      <p>
-        use state {count}
-      </p>
-      <button onClick={() => setCount(count + 1)}>
-        +
-      </button>
-      <p>
-        use item {item?.count || "none"}
-      </p>
-      <button onClick={() => {
-        if (!item?.count) {
-          updateItem({
-            count: 1
-          })
-        } else {
-          updateItem({
-            count: item.count + 1
-          })
-        }
-      }}>
-        +
-      </button>
-    </div>
-  )
-}
-
-
-function Example1() {
-  const [data, setData] = useState(
-    // ** You can use initial data, or use empty **
-    // 
-    // generateRandomObjects().map(item => {
-    //   const id = generateRandomId()
-    //
-    //   return {
-    //     id: id,
-    //     height: item.height,
-    //     width: item.width,
-    //     content: () => (
-    //       <Comp
-    //         name={id}
-    //         style={{
-    //           position: 'absolute', left: 0, top: 0, right: 0, bottom: 0,
-    //           background: item.color
-    //         }}
-    //       >
-    //       </Comp>
-    //     )
-    //   }
-    // })
-    []
-  )
-
-  const handleRequestMore = async () => {
-    const newData = generateRandomObjects().map(item => {
-      const id = generateRandomId()
-
-      return {
-        id: id,
-        height: item.height,
-        width: item.width,
-        content: () => (
-          <Comp
-            name={id}
-            style={{
-              position: 'absolute', left: 0, top: 0, right: 0, bottom: 0,
-              background: item.color
-            }}
-          />
-        )
-      } // as WaterfallItem
-    })
-
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    return newData // as WaterfallItem[]
-  }
-
-  return (
-    <>
-      <XCNWaterfall
-        data={data}
-        onRequestMore={handleRequestMore}
-        bottomComponent={<h3>waterfall bottom</h3>}
-        style={{ // style and other props will inject to xcn-waterfall-container
-          height: '80vh',
-          width: '80vw',
-        }}
-      />
-    </>
-  )
-}
-
-export default Example1
-```
-
 ## Props
 
-```tsx
-// XCNWaterfall props
-export interface WaterfallProps {
-  columns?: number;
-  data?: WaterfallItems[];
-  bottomComponent?: React.ReactNode;
-  onRequestMore?: () => Promise<WaterfallItems[]>;
-}
-
-// WaterfallItems, onRequestMore need return WaterfallItems[]
-export interface WaterfallItems {
-  id: string;
-  height: number;
-  width: number;
-  content: () => any;
-
-  // don't use it, it is used by xcn-waterfall
-  renderKey?: string;
-  renderColumn?: number;
-  renderTop?: number;
-  renderHeight?: number;
-
-  // custom props, you can use it to customize your item or save state
-  [key: string]: any;
-}
-
-// useXCNWaterfallItem, get item or update item
-function useXCNWaterfallItem(itemId: string) => {
-  item: WaterfallItems;
-  updateItem: (newItemData: Partial<WaterfallItems>) => void;
-}
-```
+[接口参数](src/packages/xcn-waterfall/interface.ts)
 
 ## License
 

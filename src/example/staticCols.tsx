@@ -3,42 +3,10 @@ import {useState} from "react";
 import XCNWaterfall from "../packages/xcn-waterfall";
 import useXCNWaterfallItem from "../packages/xcn-waterfall/hooks/use-item.tsx";
 import {generateRandomId, generateRandomObjects} from "./tools.ts";
-
-export function Comp(props: any) {
-  const {item, updateItem} = useXCNWaterfallItem(props.name)
-  const [count, setCount] = useState(0)
-
-  return (
-    <div {...props}>
-      {props.name}
-      <p>
-        use state {count}
-      </p>
-      <button onClick={() => setCount(count + 1)}>
-        +
-      </button>
-      <p>
-        use item {item?.count || "none"}
-      </p>
-      <button onClick={() => {
-        if (!item?.count) {
-          updateItem({
-            count: 1
-          })
-        } else {
-          updateItem({
-            count: item.count + 1
-          })
-        }
-      }}>
-        +
-      </button>
-    </div>
-  )
-}
+import {Comp} from "./comp.tsx";
 
 
-function Example1() {
+function StaticCols() {
   const [data, setData] = useState(
     // generateRandomObjects().map(item => {
     //   const id = generateRandomId()
@@ -91,11 +59,21 @@ function Example1() {
     <>
       <XCNWaterfall
         data={data}
-        onRequestMore={handleRequestMore}
-        bottomComponent={<h3>waterfall bottom</h3>}
+        columns={3}
+        onRequestBottomMore={handleRequestMore}
+        bottomCompRenderFn={(reqCount: number, isLoading: boolean, isFinished: boolean) => (
+          <h4 style={{
+            color: 'yellow',
+            textAlign: 'center'
+          }}>waterfall bottom | reqCount {reqCount} | isLoading {`${isLoading}`} | isFinished {`${isFinished}`}</h4>
+        )}
+        style={{
+          width: '80vw',
+          height: '80vh'
+        }}
       />
     </>
   )
 }
 
-export default Example1
+export default StaticCols

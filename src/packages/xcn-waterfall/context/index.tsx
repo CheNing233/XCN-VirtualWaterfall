@@ -1,8 +1,10 @@
 import {createContext} from "react";
+import {WaterfallSize} from "../interface.ts";
 
 
 export interface XCNWaterfallColumnContextProps {
   columns: number;
+  columnsGroup: WaterfallSize;
   columnWidth: number;
   columnState: Map<string, any>;
   columnMaxHeight: number;
@@ -14,6 +16,7 @@ export interface XCNWaterfallColumnContextProps {
 
 export const initialColumnContext: XCNWaterfallColumnContextProps = {
   columns: 0,
+  columnsGroup: {},
   columnWidth: 0,
   columnState: new Map(),
   columnMaxHeight: 0,
