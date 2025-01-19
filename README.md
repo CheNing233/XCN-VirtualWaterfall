@@ -5,6 +5,8 @@
 
 一个简单的定宽不定高虚拟列表瀑布流组件，使用`react + ts`编写，适用于`react`项目
 
+![example](example.png)
+
 ## Feature
 
 - [x] 支持虚拟列表
