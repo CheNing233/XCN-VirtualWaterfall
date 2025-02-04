@@ -1,4 +1,5 @@
 import * as React from "react";
+import {RefObject} from "react";
 
 /*
 * 瀑布流列表项，用来渲染每个格子
@@ -47,6 +48,7 @@ export interface WaterfallProps {
   columns?: number;
   columnsGroup?: WaterfallSize;
   data?: WaterfallItems[];
+  scrollContainerRef?: RefObject<HTMLDivElement>;
   bottomCompRenderFn?: (reqCount: number, isLoading: boolean, isFinished: boolean) => React.ReactNode;
   onRequestBottomMore?: (reqCount: number) => Promise<WaterfallItems[]>;
 
@@ -62,6 +64,7 @@ export interface WaterfallElement extends Partial<HTMLDivElement> {
 
 export interface WaterfallRenderProps {
   onRequestBottomMore: (reqCount: number) => Promise<WaterfallItems[]>;
+  scrollContainerRef?: RefObject<HTMLDivElement>;
   bottomComponentFn?: (reqCount: number, isLoading: boolean, isFinished: boolean) => React.ReactNode;
 }
 

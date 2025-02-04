@@ -12,6 +12,10 @@ export interface XCNWaterfallColumnContextProps {
   bufferHeight: number;
   scrollTop: number;
   renderNumber: number;
+  initState: () => void;
+  computedPosition: () => void;
+  computedItemsInView: () => any[],
+  setItemsToRender: (value: any[]) => void,
 }
 
 export const initialColumnContext: XCNWaterfallColumnContextProps = {
@@ -24,6 +28,13 @@ export const initialColumnContext: XCNWaterfallColumnContextProps = {
   bufferHeight: 1024,
   scrollTop: 0,
   renderNumber: 0,
+  initState: () => {
+  },
+  computedPosition: () => {
+  },
+  computedItemsInView: () => [],
+  setItemsToRender: () => {
+  },
 };
 
 export const XCNWaterfallColumnContext =

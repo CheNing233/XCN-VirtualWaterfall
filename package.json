@@ -1,7 +1,7 @@
 {
   "name": "xcn-waterfall",
   "private": false,
-  "version": "0.9.1",
+  "version": "0.9.3",
   "description": "A simple react virtual waterfall component",
   "author": "xChenNing <chening233@foxmail.com>",
   "license": "MIT",
@@ -18,7 +18,11 @@
   "module": "dist/xcn-waterfall.es.js",
   "types": "src/index.d.ts",
   "files": [
-    "dist/*"
+    "dist/*",
+    "src/*",
+    "README.md",
+    "LICENSE.txt",
+    "example.png"
   ],
   "scripts": {
     "dev": "vite",

@@ -21,6 +21,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
     {
       bottomComponentFn,
       onRequestBottomMore,
+      scrollContainerRef
     },
     ref
   ) => {
@@ -149,12 +150,16 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         initState()
         computedPosition()
         setItemsToRender(computedItemsInView())
+        columnContext.initState = initState
+        columnContext.computedPosition = computedPosition
+        columnContext.computedItemsInView = computedItemsInView
+        columnContext.setItemsToRender = setItemsToRender
       }
     }, [listRef.current]);
 
     // 初始化监听
     useEffect(() => {
-      const content = contentRef.current
+      const content = scrollContainerRef?.current ?? contentRef.current
 
       // 滚动事件
       const handleScroll = rafThrottle(() => {
@@ -196,11 +201,14 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
           resizeObserver.unobserve(content)
         }
       }
-    }, [contentRef.current]);
+    }, [contentRef.current, scrollContainerRef?.current]);
 
     // 渲染视图内项目
     return (
-      <div className={"xcn-waterfall-content"} ref={contentRef}>
+      <div
+        className={scrollContainerRef?.current ? "" : "xcn-waterfall-content"}
+        ref={contentRef}
+      >
         <div className={"xcn-waterfall-list"} ref={listRef}>
           {
             itemsToRender.map((item: WaterfallItems) => {
@@ -241,6 +249,7 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
       onRequestBottomMore,
       columns = 4,
       columnsGroup = {},
+      scrollContainerRef = null,
       bottomCompRenderFn,
       ...props
     },
@@ -258,6 +267,13 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
       bufferHeight: 1024,
       scrollTop: 0,
       renderNumber: 0,
+      initState: () => {
+      },
+      computedPosition: () => {
+      },
+      computedItemsInView: () => [],
+      setItemsToRender: () => {
+      },
     })
 
     const [dataContext] = useState<XCNWaterfallDataContextProps>({
@@ -293,6 +309,7 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
           <XCNWaterfallDataContext.Provider value={dataContext}>
             <RenderItems
               ref={renderRef}
+              scrollContainerRef={scrollContainerRef}
               bottomComponentFn={bottomCompRenderFn}
               onRequestBottomMore={_handleRequestBottomMore}
             />

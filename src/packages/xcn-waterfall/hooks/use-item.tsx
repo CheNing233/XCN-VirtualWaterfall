@@ -1,10 +1,11 @@
 import {useContext, useState} from "react";
-import {XCNWaterfallDataContext} from "../context";
+import {XCNWaterfallColumnContext, XCNWaterfallDataContext} from "../context";
 import {WaterfallItems} from "../interface.ts";
 
 function useXCNWaterfallItem(itemId: string) {
   // 通过 context 获取数据
   const dataContext = useContext(XCNWaterfallDataContext);
+  const columnContext = useContext(XCNWaterfallColumnContext);
 
   // 设置 tick，用于触发组件更新
   const [, setTick] = useState(0);
@@ -24,7 +25,14 @@ function useXCNWaterfallItem(itemId: string) {
     }
   };
 
-  return {item, updateItem};
+  return {
+    item,
+    updateItem,
+    initState: columnContext.initState,
+    computedPosition: columnContext.computedPosition,
+    computedItemsInView: columnContext.computedItemsInView,
+    setItemsToRender: columnContext.setItemsToRender,
+  };
 }
 
 export default useXCNWaterfallItem;
