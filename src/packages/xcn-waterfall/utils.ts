@@ -105,3 +105,34 @@ export function debounce(fn: any, delay: number = 100) {
     }, delay);
   };
 }
+
+export function traceCaller(fn: any) {
+  return () => {
+    // 创建错误对象获取堆栈信息
+    const err = new Error();
+
+    // 解析堆栈信息
+    const stackLines = err.stack?.split('\n') || [];
+
+    // 过滤无关堆栈行（不同浏览器可能有不同偏移量）
+    const relevantLine = stackLines.find(line =>
+      line.includes('at ') &&
+      !line.includes('traceCaller') &&
+      !line.includes('new Error')
+    );
+
+    // 提取具体调用位置
+    const match = relevantLine?.match(/\((.*):(\d+):(\d+)\)$/) ||
+      relevantLine?.match(/(\w+\.\w+):(\d+):(\d+)$/);
+
+    // 格式化输出
+    if (match) {
+      const [_, file, line, column] = match;
+      console.warn(`Called from: ${file} (line ${line}, column ${column})`);
+    } else {
+      console.warn('Caller location not found');
+    }
+
+    fn()
+  }
+}

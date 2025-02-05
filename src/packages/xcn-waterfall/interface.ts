@@ -44,13 +44,16 @@ export interface WaterfallSize {
   xxxl?: number;
 }
 
+export type scrollElement = HTMLDivElement | string | RefObject<HTMLDivElement>;
+
 export interface WaterfallProps {
   columns?: number;
   columnsGroup?: WaterfallSize;
   data?: WaterfallItems[];
-  scrollContainerRef?: RefObject<HTMLDivElement>;
+  scrollContainer?: scrollElement;
   bottomCompRenderFn?: (reqCount: number, isLoading: boolean, isFinished: boolean) => React.ReactNode;
   onRequestBottomMore?: (reqCount: number) => Promise<WaterfallItems[]>;
+  debugMode?: boolean;
 
   style?: React.CSSProperties;
   className?: string;
@@ -64,7 +67,7 @@ export interface WaterfallElement extends Partial<HTMLDivElement> {
 
 export interface WaterfallRenderProps {
   onRequestBottomMore: (reqCount: number) => Promise<WaterfallItems[]>;
-  scrollContainerRef?: RefObject<HTMLDivElement>;
+  scrollContainer?: scrollElement;
   bottomComponentFn?: (reqCount: number, isLoading: boolean, isFinished: boolean) => React.ReactNode;
 }
 

@@ -9,6 +9,11 @@
     overflow-y: scroll;
 }
 
+.xcn-waterfall-content-outer-scroll{
+    width: 100%;
+    height: 100%;
+}
+
 .xcn-waterfall-list {
     position: relative;
     width: 100%;

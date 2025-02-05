@@ -6,13 +6,7 @@ import {Comp} from "./comp.tsx";
 import {WaterfallItems} from "../packages/xcn-waterfall/interface.ts";
 
 
-function GivenScrollContainer(
-  {
-    scrollRef
-  }: {
-    scrollRef: React.RefObject<HTMLDivElement>
-  }
-) {
+function GivenScrollContainer() {
   const [data, setData] = useState([])
 
   const count = useRef(0)
@@ -55,13 +49,14 @@ function GivenScrollContainer(
         data={data}
         columns={3}
         onRequestBottomMore={handleRequestMore}
-        scrollContainerRef={scrollRef}
+        scrollContainer={"#main-scroll"}
         bottomCompRenderFn={(reqCount: number, isLoading: boolean, isFinished: boolean) => (
           <h4 style={{
             color: 'yellow',
             textAlign: 'center'
           }}>waterfall bottom | reqCount {reqCount} | isLoading {`${isLoading}`} | isFinished {`${isFinished}`}</h4>
         )}
+        debugMode={true}
         style={{
           width: "100%",
           height: "100%",

@@ -12,6 +12,7 @@ export interface XCNWaterfallColumnContextProps {
   bufferHeight: number;
   scrollTop: number;
   renderNumber: number;
+  debugMode: boolean;
   initState: () => void;
   computedPosition: () => void;
   computedItemsInView: () => any[],
@@ -28,6 +29,7 @@ export const initialColumnContext: XCNWaterfallColumnContextProps = {
   bufferHeight: 1024,
   scrollTop: 0,
   renderNumber: 0,
+  debugMode: false,
   initState: () => {
   },
   computedPosition: () => {

@@ -1,4 +1,4 @@
-import {StrictMode, useRef} from 'react'
+import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 import './main.css'
 
@@ -7,7 +7,6 @@ import StaticCols from "./staticCols.tsx";
 import GivenScrollContainer from "./givenScrollContainer.tsx";
 
 const App = () => {
-  const mainRef = useRef<HTMLDivElement>(null)
 
   return (
     <div
@@ -20,14 +19,14 @@ const App = () => {
         overflowY: 'scroll',
         overflowX: 'hidden',
       }}
-      ref={mainRef}
+      id={"main-scroll"}
     >
       <h2>StaticCols</h2>
       <StaticCols/>
       <h2>ResponsiveCols</h2>
       <ResponsiveCols/>
       <h2>GivenScrollContainer</h2>
-      <GivenScrollContainer scrollRef={mainRef}/>
+      <GivenScrollContainer/>
     </div>
   )
 }

@@ -14,6 +14,7 @@ import {
   WaterfallRenderProps
 } from "./interface.ts";
 import {debounce, findClosestIndex, getResponsiveValue, rafThrottle} from "./utils.ts";
+import useConsole from "./hooks/use-console.tsx";
 
 
 const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
@@ -21,7 +22,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
     {
       bottomComponentFn,
       onRequestBottomMore,
-      scrollContainerRef
+      scrollContainer
     },
     ref
   ) => {
@@ -35,9 +36,34 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
 
     const [, setTick] = useState(0)
 
-    const initState = () => {
-      console.log('initState', columnContext.renderNumber)
+    const log = useConsole()
 
+    const getScrollContainer = (): [HTMLDivElement, number] => {
+      let container: HTMLDivElement | null = null;
+      let offsetTop: number;
+
+      // 处理不同类型的 scrollContainer
+      if (typeof scrollContainer === 'string') {
+        // 字符串类型时使用选择器获取元素
+        container = document.querySelector(scrollContainer) as HTMLDivElement;
+      } else if (scrollContainer && 'current' in scrollContainer) {
+        // RefObject 类型时获取 current
+        container = scrollContainer.current;
+      } else if (scrollContainer) {
+        container = scrollContainer
+      }
+
+      if (container) {
+        offsetTop = contentRef.current?.offsetTop || 0
+      } else {
+        container = contentRef.current;
+        offsetTop = 0
+      }
+
+      return [container!, offsetTop]
+    }
+
+    const initState = () => {
       columnContext.columnState.clear()
       for (let i = 0; i < columnContext.columns; i++) {
         columnContext?.columnState.set(i.toString(), {
@@ -47,14 +73,17 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       columnContext.columnWidth = contentRef.current!.clientWidth / columnContext.columns;
       columnContext.renderNumber = (columnContext.renderNumber + 1) % 8;
 
-      console.log('initState +', columnContext.columnWidth, contentRef.current!.clientWidth)
+      log.log(
+        "initState",
+        "renderNum", columnContext.renderNumber,
+        "colW", columnContext.columnWidth,
+        "clientW", contentRef.current!.clientWidth
+      )
     }
 
     const computedPosition = () => {
-      console.log('computedPosition', columnContext.renderNumber)
-
       if (dataContext.dataLoading) {
-        console.warn('dataLoading')
+        log.warn('dataLoading')
       }
 
       let currentColumn = 0;
@@ -86,12 +115,19 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
 
       // 设置列表高度，撑开容器滚动
       listRef.current!.style.height = columnContext.columnMaxHeight + 'px'
+
+      log.log(
+        "computedPosition",
+        "maxColH", columnContext.columnMaxHeight,
+        "minColH", columnContext.columnMinHeight,
+      )
     }
 
     const computedItemsInView = () => {
-      console.log('computedItemsInView', columnContext.renderNumber);
+      const [scrollBox, offsetHRelToScrollBox] = getScrollContainer()!
 
-      const scrollTop = contentRef.current!.scrollTop;
+      const scrollTop = scrollBox.scrollTop - offsetHRelToScrollBox;
+
       const data = dataContext.sortedData;
 
       // 使用排序后的数据进行二分查找
@@ -103,15 +139,31 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
 
       const endIndex = findClosestIndex(
         data,
-        scrollTop + contentRef.current!.clientHeight + columnContext.bufferHeight,
+        scrollTop + scrollBox.clientHeight + columnContext.bufferHeight,
         (item) => item.renderTop!
       ) + 1;
+
+      log.log(
+        'computedItemsInView',
+        "scrollTop", scrollTop,
+        "offsetHRelToScrollBox", offsetHRelToScrollBox,
+        "startIdx", startIndex || 0,
+        "endIdx", endIndex > data.length ? data.length : endIndex,
+      );
 
       return data.slice(
         startIndex || 0,
         endIndex > data.length ? data.length : endIndex
       );
     };
+
+    const fullRerender = debounce(() => {
+      log.log('fullRerender')
+
+      initState()
+      computedPosition()
+      setItemsToRender(computedItemsInView())
+    })
 
     // 处理添加数据
     const addBottomData = (
@@ -121,9 +173,12 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         .then((newData) => {
           dataContext.data.push(...newData)
           dataContext.bottomDataRequestCount++
-          initState()
-          computedPosition()
-          setItemsToRender(computedItemsInView())
+          if (newData.length !== 0) {
+            initState()
+            computedPosition()
+            setItemsToRender(computedItemsInView())
+          }
+          log.log('addBottomData', newData)
         })
     }
 
@@ -142,6 +197,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
 
     // 初始化数据, 首次渲染
     useEffect(() => {
+      log.log('首次渲染, listRef')
       if (dataContext.data.length === 0) {
         addBottomData(onRequestBottomMore)
       }
@@ -159,54 +215,79 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
 
     // 初始化监听
     useEffect(() => {
-      const content = scrollContainerRef?.current ?? contentRef.current
+      const [scrollBox, offsetHRelToScrollBox] = getScrollContainer() || null;
 
-      // 滚动事件
+      // 滚动事件处理
       const handleScroll = rafThrottle(() => {
-        columnContext.scrollTop = content!.scrollTop
-        setItemsToRender(computedItemsInView())
+        if (!scrollBox) return;
 
-        if (columnContext.scrollTop + content!.clientHeight
+        columnContext.scrollTop = scrollBox.scrollTop;
+        setItemsToRender(computedItemsInView());
+
+        if (columnContext.scrollTop + scrollBox.clientHeight
           >= columnContext.columnMinHeight - columnContext.bufferHeight
         ) {
           if (!dataContext.dataLoading && !dataContext.dataFinished) {
-            addBottomData(onRequestBottomMore)
+            log.log('触发加载更多, addBottomData')
+            addBottomData(onRequestBottomMore);
           }
         }
-      })
 
-      // 窗口大小改变事件
+        log.log(
+          'scroll handler',
+          "scrollTop", columnContext.scrollTop,
+        )
+      });
+
+      // 响应式处理
       const handleResize = debounce(() => {
-        // 计算响应式列数
+        if (!contentRef.current) return;
+
         columnContext.columns = getResponsiveValue(
-          contentRef.current!.clientWidth,
+          contentRef.current.clientWidth,
           columnContext.columns,
           columnContext.columnsGroup
+        );
+
+        initState();
+        computedPosition();
+        setItemsToRender(computedItemsInView());
+
+        log.log(
+          'resize handler',
+          "columns", columnContext.columns,
+          "clientW", contentRef.current.clientWidth,
         )
+      });
 
-        initState()
-        computedPosition()
-        setItemsToRender(computedItemsInView())
-      })
+      const resizeObserver = new ResizeObserver(handleResize);
 
-      const resizeObserver = new ResizeObserver(handleResize)
-
-      if (content) {
-        content.addEventListener('scroll', handleScroll)
-        resizeObserver.observe(content)
+      // 绑定监听
+      if (scrollBox) {
+        scrollBox.addEventListener('scroll', handleScroll);
+        resizeObserver.observe(scrollBox);
       }
+
+      log.log(
+        '初始化监听',
+        "contentRef", contentRef,
+        "scrollContainer", scrollContainer,
+        "scrollBox", scrollBox,
+      )
+
+      // 清理函数
       return () => {
-        if (content) {
-          content.removeEventListener('scroll', handleScroll)
-          resizeObserver.unobserve(content)
+        if (scrollBox) {
+          scrollBox.removeEventListener('scroll', handleScroll);
+          resizeObserver.unobserve(scrollBox);
         }
-      }
-    }, [contentRef.current, scrollContainerRef?.current]);
+      };
+    }, [contentRef, scrollContainer]); // 依赖项调整为 ref 对象本身
 
     // 渲染视图内项目
     return (
       <div
-        className={scrollContainerRef?.current ? "" : "xcn-waterfall-content"}
+        className={scrollContainer ? "xcn-waterfall-content-outer-scroll" : "xcn-waterfall-content"}
         ref={contentRef}
       >
         <div className={"xcn-waterfall-list"} ref={listRef}>
@@ -246,11 +327,12 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
   (
     {
       data = [],
-      onRequestBottomMore,
+      onRequestBottomMore = () => [],
       columns = 4,
       columnsGroup = {},
-      scrollContainerRef = null,
+      scrollContainer = null,
       bottomCompRenderFn,
+      debugMode = false,
       ...props
     },
     ref
@@ -267,6 +349,7 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
       bufferHeight: 1024,
       scrollTop: 0,
       renderNumber: 0,
+      debugMode: debugMode,
       initState: () => {
       },
       computedPosition: () => {
@@ -309,7 +392,7 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
           <XCNWaterfallDataContext.Provider value={dataContext}>
             <RenderItems
               ref={renderRef}
-              scrollContainerRef={scrollContainerRef}
+              scrollContainer={scrollContainer}
               bottomComponentFn={bottomCompRenderFn}
               onRequestBottomMore={_handleRequestBottomMore}
             />
