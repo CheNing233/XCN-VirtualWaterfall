@@ -15,8 +15,8 @@ export interface XCNWaterfallColumnContextProps {
   debugMode: boolean;
   initState: () => void;
   computedPosition: () => void;
-  computedItemsInView: () => any[],
-  setItemsToRender: (value: any[]) => void,
+  computedItemsInView: () => [number, number],
+  setItemsToRender: (renderRange: [number, number], force?: boolean) => void,
 }
 
 export const initialColumnContext: XCNWaterfallColumnContextProps = {
@@ -34,7 +34,7 @@ export const initialColumnContext: XCNWaterfallColumnContextProps = {
   },
   computedPosition: () => {
   },
-  computedItemsInView: () => [],
+  computedItemsInView: () => [0, 0],
   setItemsToRender: () => {
   },
 };

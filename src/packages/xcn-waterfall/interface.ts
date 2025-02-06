@@ -17,7 +17,7 @@ export interface WaterfallItems {
   id: string;
   height: number;
   width: number;
-  content: () => any;
+  content: (props: { item: WaterfallItems, [key: string]: any }) => any;
 
   renderKey?: string;
   renderColumn?: number;
@@ -74,8 +74,8 @@ export interface WaterfallRenderProps {
 export interface WaterfallRenderElement extends Partial<HTMLDivElement> {
   initState: () => void;
   computedPosition: () => void;
-  setItemsToRender: (value: React.SetStateAction<WaterfallItems[]>) => void
-  computedItemsInView: () => any[];
+  setItemsToRender: (renderRange: [number, number], force?: boolean) => void
+  computedItemsInView: () => [number, number];
   addBottomData: (fn: () => Promise<WaterfallItems[]>) => void;
   refresh: () => void;
 }

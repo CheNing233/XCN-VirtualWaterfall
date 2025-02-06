@@ -1,7 +1,7 @@
 {
   "name": "xcn-waterfall",
   "private": false,
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "A simple react virtual waterfall component",
   "author": "xChenNing <chening233@foxmail.com>",
   "license": "MIT",

@@ -1,5 +1,5 @@
 import "./styles/index.css"
-import {forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState} from "react";
+import {forwardRef, memo, useContext, useEffect, useImperativeHandle, useRef, useState} from "react";
 import {
   XCNWaterfallColumnContext,
   XCNWaterfallColumnContextProps,
@@ -16,6 +16,44 @@ import {
 import {debounce, findClosestIndex, getResponsiveValue, rafThrottle} from "./utils.ts";
 import useConsole from "./hooks/use-console.tsx";
 
+const MemoItem = memo(
+  (
+    {
+      item,
+      colWidth
+    }: {
+      item: WaterfallItems,
+      colWidth: number
+    }
+  ) => {
+    const offsetLeft = item.renderColumn! * colWidth
+    const Content = item.content
+    return (
+      <div
+        className={"xcn-waterfall-item"}
+        style={{
+          width: colWidth,
+          aspectRatio: `${item.width} / ${item.height}`,
+          transform: `translate(${offsetLeft}px, ${item.renderTop}px)`,
+        }}
+      >
+        <Content item={item}/>
+      </div>
+    )
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.item.id === nextProps.item.id &&
+      prevProps.item.height === nextProps.item.height &&
+      prevProps.item.width === nextProps.item.width &&
+      prevProps.item.renderKey === nextProps.item.renderKey &&
+      prevProps.item.renderColumn === nextProps.item.renderColumn &&
+      prevProps.item.renderTop === nextProps.item.renderTop &&
+      prevProps.item.renderHeight === nextProps.item.renderHeight &&
+      prevProps.colWidth === nextProps.colWidth
+    );
+  }
+)
 
 const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
   (
@@ -32,11 +70,14 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
     const columnContext = useContext(XCNWaterfallColumnContext)
     const dataContext = useContext(XCNWaterfallDataContext)
 
-    const [itemsToRender, setItemsToRender] = useState<WaterfallItems[]>([])
+    const [itemsToRender, _setItemsToRender] = useState<WaterfallItems[]>([])
 
     const [, setTick] = useState(0)
 
     const log = useConsole()
+
+    const cachedStartIdx = useRef<number>(0)
+    const cachedEndIdx = useRef<number>(0)
 
     const getScrollContainer = (): [HTMLDivElement, number] => {
       let container: HTMLDivElement | null = null;
@@ -123,7 +164,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       )
     }
 
-    const computedItemsInView = () => {
+    const computedItemsInView = (): [number, number] => {
       const [scrollBox, offsetHRelToScrollBox] = getScrollContainer()!
 
       const scrollTop = scrollBox.scrollTop - offsetHRelToScrollBox;
@@ -151,11 +192,35 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         "endIdx", endIndex > data.length ? data.length : endIndex,
       );
 
-      return data.slice(
+      return [
         startIndex || 0,
         endIndex > data.length ? data.length : endIndex
-      );
+      ];
     };
+
+    const setItemsToRender = (renderRange: [number, number], force?: boolean) => {
+      const [startIndex, endIndex] = renderRange;
+
+      if (
+        startIndex === cachedStartIdx.current &&
+        endIndex === cachedEndIdx.current &&
+        !force
+      ) {
+        return
+      }
+
+      cachedStartIdx.current = startIndex
+      cachedEndIdx.current = endIndex
+
+      const data = dataContext.sortedData;
+
+      const dataToRender = data.slice(
+        startIndex,
+        endIndex
+      );
+
+      _setItemsToRender(dataToRender)
+    }
 
     const fullRerender = debounce(() => {
       log.log('fullRerender')
@@ -251,7 +316,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
 
         initState();
         computedPosition();
-        setItemsToRender(computedItemsInView());
+        setItemsToRender(computedItemsInView(), true);
 
         log.log(
           'resize handler',
@@ -293,21 +358,11 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         <div className={"xcn-waterfall-list"} ref={listRef}>
           {
             itemsToRender.map((item: WaterfallItems) => {
-              const offsetLeft = item.renderColumn! * columnContext.columnWidth
-              const Content = item.content
-              return (
-                <div
-                  key={item.renderKey}
-                  className={"xcn-waterfall-item"}
-                  style={{
-                    width: columnContext.columnWidth,
-                    aspectRatio: `${item.width} / ${item.height}`,
-                    transform: `translate(${offsetLeft}px, ${item.renderTop}px)`,
-                  }}
-                >
-                  <Content/>
-                </div>
-              )
+              return <MemoItem
+                key={item.renderKey}
+                item={item}
+                colWidth={columnContext.columnWidth}
+              />
             })
           }
         </div>
@@ -354,7 +409,7 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
       },
       computedPosition: () => {
       },
-      computedItemsInView: () => [],
+      computedItemsInView: () => [0, 0],
       setItemsToRender: () => {
       },
     })
