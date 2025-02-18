@@ -35,6 +35,7 @@ function useXCNWaterfallItem(itemId: string) {
     computedPosition: columnContext.computedPosition,
     computedItemsInView: columnContext.computedItemsInView,
     setItemsToRender: columnContext.setItemsToRender,
+    fullReRender: columnContext.fullReRender,
   };
 }
 

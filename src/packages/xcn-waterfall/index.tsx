@@ -20,10 +20,12 @@ const MemoItem = memo(
   (
     {
       item,
-      colWidth
+      colWidth,
+      renderNumber
     }: {
       item: WaterfallItems,
-      colWidth: number
+      colWidth: number,
+      renderNumber: number
     }
   ) => {
     const offsetLeft = item.renderColumn! * colWidth
@@ -42,7 +44,7 @@ const MemoItem = memo(
     )
   },
   (prevProps, nextProps) => {
-    return (
+    const isE = (
       prevProps.item.id === nextProps.item.id &&
       prevProps.item.height === nextProps.item.height &&
       prevProps.item.width === nextProps.item.width &&
@@ -50,8 +52,11 @@ const MemoItem = memo(
       prevProps.item.renderColumn === nextProps.item.renderColumn &&
       prevProps.item.renderTop === nextProps.item.renderTop &&
       prevProps.item.renderHeight === nextProps.item.renderHeight &&
-      prevProps.colWidth === nextProps.colWidth
-    );
+      prevProps.colWidth === nextProps.colWidth &&
+      prevProps.renderNumber === nextProps.renderNumber
+    )
+
+    return isE;
   }
 )
 
@@ -128,6 +133,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       }
 
       let currentColumn = 0;
+
 
       // 遍历数据，计算每个 item 的位置和高度
       dataContext.data.forEach((item: WaterfallItems, index: number) => {
@@ -227,7 +233,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
 
       initState()
       computedPosition()
-      setItemsToRender(computedItemsInView())
+      setItemsToRender(computedItemsInView(), true)
     })
 
     // 处理添加数据
@@ -275,6 +281,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         columnContext.computedPosition = computedPosition
         columnContext.computedItemsInView = computedItemsInView
         columnContext.setItemsToRender = setItemsToRender
+        columnContext.fullReRender = fullRerender
       }
     }, [listRef.current]);
 
@@ -362,6 +369,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
                 key={item.renderKey}
                 item={item}
                 colWidth={columnContext.columnWidth}
+                renderNumber={columnContext.renderNumber}
               />
             })
           }
@@ -411,6 +419,8 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
       },
       computedItemsInView: () => [0, 0],
       setItemsToRender: () => {
+      },
+      fullReRender: () => {
       },
     })
 
