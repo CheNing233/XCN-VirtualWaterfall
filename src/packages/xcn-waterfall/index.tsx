@@ -60,6 +60,8 @@ const MemoItem = memo(
   }
 )
 
+const eventBus = new EventTarget()
+
 const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
   (
     {
@@ -78,6 +80,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
     const [itemsToRender, _setItemsToRender] = useState<WaterfallItems[]>([])
 
     const [, setTick] = useState(0)
+    const [waitOnBottomMore, setWaitOnBottomMore] = useState(false)
 
     const log = useConsole()
 
@@ -236,11 +239,10 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       setItemsToRender(computedItemsInView(), true)
     })
 
-    // 处理添加数据
-    const addBottomData = (
-      fn: (bottomDataRequestCount: number) => Promise<WaterfallItems[]>
-    ) => {
-      fn(dataContext.bottomDataRequestCount)
+    // 响应 waitOnBottomMore
+    useEffect(() => {
+      if (!waitOnBottomMore) return;
+      onRequestBottomMore(dataContext.bottomDataRequestCount)
         .then((newData) => {
           dataContext.data.push(...newData)
           dataContext.bottomDataRequestCount++
@@ -249,9 +251,24 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
             computedPosition()
             setItemsToRender(computedItemsInView())
           }
+          eventBus.dispatchEvent(new CustomEvent('addBottomDataEnd'))
           log.log('addBottomData', newData)
         })
+    }, [waitOnBottomMore]);
+    // 处理添加新数据
+    const addBottomData = () => {
+      setWaitOnBottomMore(true)
     }
+    // 监听 addBottomDataEnd 事件，处理副作用
+    useEffect(() => {
+      const addBottomDataEnd = () => {
+        setWaitOnBottomMore(false)
+      }
+      eventBus.addEventListener('addBottomDataEnd', addBottomDataEnd)
+      return () => {
+        eventBus.removeEventListener('addBottomDataEnd', addBottomDataEnd)
+      }
+    }, [setWaitOnBottomMore]);
 
     const refresh = () => {
       setTick((tick) => (tick + 1) % 8)
@@ -270,7 +287,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
     useEffect(() => {
       log.log('首次渲染, listRef')
       if (dataContext.data.length === 0) {
-        addBottomData(onRequestBottomMore)
+        addBottomData()
       }
 
       if (listRef.current) {
@@ -301,7 +318,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         ) {
           if (!dataContext.dataLoading && !dataContext.dataFinished) {
             log.log('触发加载更多, addBottomData')
-            addBottomData(onRequestBottomMore);
+            addBottomData();
           }
         }
 
@@ -433,12 +450,12 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
     })
 
 
-    const _handleRequestBottomMore = async () => {
+    const _handleRequestBottomMore = async (reqCount: number) => {
       if (!onRequestBottomMore) return []
 
       dataContext.dataLoading = true
       renderRef.current!.refresh()
-      const newData = await onRequestBottomMore()
+      const newData = await onRequestBottomMore(reqCount)
       dataContext.dataLoading = false
       renderRef.current!.refresh()
 

@@ -30,7 +30,9 @@ function StaticCols() {
     []
   )
 
-  const handleRequestMore = async () => {
+  const handleRequestMore = async (reqCount: number) => {
+    console.log('request more', reqCount)
+
     const newData = generateRandomObjects().map(item => {
       const id = generateRandomId()
 

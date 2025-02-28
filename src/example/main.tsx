@@ -24,9 +24,9 @@ const App = () => {
       <h2>StaticCols</h2>
       <StaticCols/>
       <h2>ResponsiveCols</h2>
-      <ResponsiveCols/>
+      {/*<ResponsiveCols/>*/}
       <h2>GivenScrollContainer</h2>
-      <GivenScrollContainer/>
+      {/*<GivenScrollContainer/>*/}
     </div>
   )
 }
