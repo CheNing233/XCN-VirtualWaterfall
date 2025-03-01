@@ -60,7 +60,8 @@ const MemoItem = memo(
   }
 )
 
-const eventBus = new EventTarget()
+// eslint-disable-next-line react-refresh/only-export-components
+export const __eventBus = new EventTarget()
 
 const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
   (
@@ -251,7 +252,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
             computedPosition()
             setItemsToRender(computedItemsInView())
           }
-          eventBus.dispatchEvent(new CustomEvent('addBottomDataEnd'))
+          __eventBus.dispatchEvent(new CustomEvent('addBottomDataEnd'))
           log.log('addBottomData', newData)
         })
     }, [waitOnBottomMore]);
@@ -264,11 +265,42 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       const addBottomDataEnd = () => {
         setWaitOnBottomMore(false)
       }
-      eventBus.addEventListener('addBottomDataEnd', addBottomDataEnd)
+      __eventBus.addEventListener('addBottomDataEnd', addBottomDataEnd)
       return () => {
-        eventBus.removeEventListener('addBottomDataEnd', addBottomDataEnd)
+        __eventBus.removeEventListener('addBottomDataEnd', addBottomDataEnd)
       }
     }, [setWaitOnBottomMore]);
+
+    const updateItemById = (
+      id: string,
+      newItemState: Partial<WaterfallItems>
+    ) => {
+      dataContext.data.find((item: WaterfallItems, index: number) => {
+        if (item.id === id) {
+          dataContext.data[index] = {
+            ...item,
+            ...newItemState
+          }
+          __eventBus.dispatchEvent(new CustomEvent('itemChange', {detail: id}))
+        }
+      })
+    }
+
+    const updateItem = (
+      // 根据 findFn => true 找到对应的 item，并更新其状态
+      findFn: (item: WaterfallItems) => boolean,
+      newItemState: Partial<WaterfallItems>
+    ) => {
+      dataContext.data.find((item: WaterfallItems, index: number) => {
+        if (findFn(item)) {
+          dataContext.data[index] = {
+            ...item,
+            ...newItemState
+          }
+          __eventBus.dispatchEvent(new CustomEvent('itemChange', {detail: item.id}))
+        }
+      })
+    }
 
     const refresh = () => {
       setTick((tick) => (tick + 1) % 8)
@@ -280,7 +312,9 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       setItemsToRender,
       computedItemsInView,
       addBottomData,
-      refresh
+      refresh,
+      updateItemById,
+      updateItem
     }))
 
     // 初始化数据, 首次渲染
@@ -299,6 +333,8 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         columnContext.computedItemsInView = computedItemsInView
         columnContext.setItemsToRender = setItemsToRender
         columnContext.fullReRender = fullRerender
+        dataContext.updateItemById = updateItemById
+        dataContext.updateItem = updateItem
       }
     }, [listRef.current]);
 
@@ -447,6 +483,10 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
       bottomDataRequestCount: 0,
       dataLoading: false,
       dataFinished: false,
+      updateItemById: () => {
+      },
+      updateItem: () => {
+      },
     })
 
 
@@ -467,6 +507,15 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
         return []
       }
     }
+
+
+    useImperativeHandle(ref, () => {
+      return {
+        updateItemById: renderRef.current!.updateItemById,
+        updateItemByFunc: renderRef.current!.updateItem,
+        refresh: renderRef.current!.refresh,
+      }
+    })
 
     return (
       <div className={"xcn-waterfall-container"} {...props}>

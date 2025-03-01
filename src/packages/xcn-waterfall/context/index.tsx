@@ -1,5 +1,5 @@
 import {createContext} from "react";
-import {WaterfallSize} from "../interface.ts";
+import {WaterfallItems, WaterfallSize} from "../interface.ts";
 
 
 export interface XCNWaterfallColumnContextProps {
@@ -51,6 +51,12 @@ export interface XCNWaterfallDataContextProps {
   bottomDataRequestCount: number;
   dataLoading: boolean;
   dataFinished: boolean;
+  updateItemById: (id: string, newItemState: Partial<WaterfallItems>) => void;
+  updateItem: (
+    // 根据 findFn => true 找到对应的 item，并更新其状态
+    findFn: (item: WaterfallItems) => boolean,
+    newItemState: Partial<WaterfallItems>
+  ) => void;
 }
 
 export const initialDataContext: XCNWaterfallDataContextProps = {
@@ -59,6 +65,10 @@ export const initialDataContext: XCNWaterfallDataContextProps = {
   bottomDataRequestCount: 0,
   dataLoading: false,
   dataFinished: false,
+  updateItemById: () => {
+  },
+  updateItem: () => {
+  },
 };
 
 export const XCNWaterfallDataContext =

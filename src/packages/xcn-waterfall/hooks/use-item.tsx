@@ -1,7 +1,8 @@
-import {useContext, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {XCNWaterfallColumnContext, XCNWaterfallDataContext} from "../context";
 import {WaterfallItems} from "../interface.ts";
 import useConsole from "./use-console.tsx";
+import {__eventBus} from "../index.tsx";
 
 function useXCNWaterfallItem(itemId: string) {
   // 通过 context 获取数据
@@ -28,6 +29,21 @@ function useXCNWaterfallItem(itemId: string) {
     }
   };
 
+  // 监听变更
+  useEffect(() => {
+    const handleItemChange = (e: any) => {
+      const evt = e as CustomEvent<string>;
+      if (evt.detail === itemId) {
+        setTick(tick => (tick + 1) % 8)
+      }
+    }
+
+    __eventBus.addEventListener('itemChange', handleItemChange)
+    return () => {
+      __eventBus.removeEventListener('itemChange', handleItemChange)
+    }
+  }, []);
+
   return {
     item,
     updateItem,
@@ -36,6 +52,8 @@ function useXCNWaterfallItem(itemId: string) {
     computedItemsInView: columnContext.computedItemsInView,
     setItemsToRender: columnContext.setItemsToRender,
     fullReRender: columnContext.fullReRender,
+    updateItemById: dataContext.updateItemById,
+    updateItemByFunc: dataContext.updateItem,
   };
 }
 

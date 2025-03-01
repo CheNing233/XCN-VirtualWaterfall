@@ -78,4 +78,10 @@ export interface WaterfallRenderElement extends Partial<HTMLDivElement> {
   computedItemsInView: () => [number, number];
   addBottomData: (fn: () => Promise<WaterfallItems[]>) => void;
   refresh: () => void;
+  updateItemById: (id: string, newItemState: Partial<WaterfallItems>) => void;
+  updateItem: (
+    // 根据 findFn => true 找到对应的 item，并更新其状态
+    findFn: (item: WaterfallItems) => boolean,
+    newItemState: Partial<WaterfallItems>
+  ) => void;
 }

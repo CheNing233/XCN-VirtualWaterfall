@@ -6,7 +6,7 @@ export function Comp(props: any) {
 
   // 通过 useXCNWaterfallItem 获取到当前卡片的 item 数据，并修改并重新渲染该卡片
   const {
-    item, updateItem,
+    item, updateItem, updateItemByFunc,
     initState, computedPosition, computedItemsInView, setItemsToRender
   } = useXCNWaterfallItem(props.name)
 
@@ -23,11 +23,27 @@ export function Comp(props: any) {
     setItemsToRender(computedItemsInView())
   }
 
+  const updateNewBoxByFunc = () => {
+    updateItemByFunc(
+      (item) => {
+        return true
+      },
+      {
+        height: Math.floor(Math.random() * (1024 - 512 + 1)) + 512,
+        width: Math.floor(Math.random() * (1024 - 512 + 1)) + 512,
+        count: 1
+      }
+    )
+    initState()
+    computedPosition()
+    setItemsToRender(computedItemsInView())
+  }
+
   return (
     <div {...props}>
       {props.name}
       <p>
-        use item {item?.count || "none"}
+        use item {Number(item?.count)}
       </p>
       <button onClick={() => {
         if (!item?.count) {
@@ -44,6 +60,11 @@ export function Comp(props: any) {
       </button>
       <button onClick={updateNewBox}>
         set new box
+      </button>
+      <button onClick={() => {
+        updateNewBoxByFunc()
+      }}>
+        set all box to 1
       </button>
     </div>
   )
