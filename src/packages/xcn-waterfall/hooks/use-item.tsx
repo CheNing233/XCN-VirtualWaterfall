@@ -54,6 +54,8 @@ function useXCNWaterfallItem(itemId: string) {
     fullReRender: columnContext.fullReRender,
     updateItemById: dataContext.updateItemById,
     updateItemByFunc: dataContext.updateItem,
+    dataContext,
+    columnContext,
   };
 }
 

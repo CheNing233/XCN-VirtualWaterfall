@@ -23,6 +23,7 @@ export interface WaterfallItems {
   renderColumn?: number;
   renderTop?: number;
   renderHeight?: number;
+  renderPosition?: number
 
   [key: string]: any;
 }

@@ -147,6 +147,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
         item.renderHeight = realHeight
         item.renderColumn = currentColumn
         item.renderTop = columnContext.columnState.get(currentColumn.toString())!.height
+        item.renderPosition = index
 
         columnContext.columnState.get(currentColumn.toString())!.height += realHeight
         currentColumn = (currentColumn === columnContext.columns - 1) ? 0 : currentColumn + 1
@@ -489,23 +490,36 @@ const XCNWaterfall = forwardRef<WaterfallElement, WaterfallProps>(
       },
     })
 
+    const _handleRequestBottomMore = (reqCount: number): Promise<WaterfallItems[]> => {
+      return new Promise((resolve) => {
+        if (!onRequestBottomMore) {
+          resolve([]);
+          return;
+        }
 
-    const _handleRequestBottomMore = async (reqCount: number) => {
-      if (!onRequestBottomMore) return []
+        dataContext.dataLoading = true;
+        renderRef.current!.refresh();
 
-      dataContext.dataLoading = true
-      renderRef.current!.refresh()
-      const newData = await onRequestBottomMore(reqCount)
-      dataContext.dataLoading = false
-      renderRef.current!.refresh()
+        onRequestBottomMore(reqCount)
+          .then((newData: WaterfallItems[]) => {
+            dataContext.dataLoading = false;
+            renderRef.current!.refresh();
 
-      if (newData && newData.length !== 0) {
-        return newData
-      } else {
-        dataContext.dataFinished = true
-        renderRef.current!.refresh()
-        return []
-      }
+            if (newData && newData.length !== 0) {
+              resolve(newData);
+            } else {
+              dataContext.dataFinished = true;
+              renderRef.current!.refresh();
+              resolve([]);
+            }
+          })
+          .catch(() => {
+            dataContext.dataLoading = false;
+            dataContext.dataFinished = true;
+            renderRef.current!.refresh();
+            resolve([]); // 根据原函数逻辑，错误时也返回空数组
+          });
+      });
     }
 
 
