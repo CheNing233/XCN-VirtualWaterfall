@@ -13,7 +13,7 @@ import {
   WaterfallRenderElement,
   WaterfallRenderProps
 } from "./interface.ts";
-import {debounce, findClosestIndex, getResponsiveValue, rafThrottle} from "./utils.ts";
+import {debounce, findClosestIndex, getResponsiveValue, rafThrottle, throttle} from "./utils.ts";
 import useConsole from "./hooks/use-console.tsx";
 
 const MemoItem = memo(
@@ -62,6 +62,7 @@ const MemoItem = memo(
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const __eventBus = new EventTarget()
+
 
 const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
   (
@@ -209,7 +210,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       ];
     };
 
-    const setItemsToRender = (renderRange: [number, number], force?: boolean) => {
+    const setItemsToRender = throttle((renderRange: [number, number], force?: boolean) => {
       const [startIndex, endIndex] = renderRange;
 
       if (
@@ -231,7 +232,7 @@ const RenderItems = forwardRef<WaterfallRenderElement, WaterfallRenderProps>(
       );
 
       _setItemsToRender(dataToRender)
-    }
+    }, 100)
 
     const fullRerender = debounce(() => {
       log.log('fullRerender')

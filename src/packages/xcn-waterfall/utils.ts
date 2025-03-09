@@ -136,3 +136,72 @@ export function traceCaller(fn: any) {
     fn()
   }
 }
+
+
+interface ThrottleOptions {
+  leading?: boolean;
+  trailing?: boolean;
+}
+
+interface ThrottledFunction<Args extends any[]> {
+  (...args: Args): void;
+
+  cancel: () => void;
+}
+
+export function throttle<T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number,
+  {leading = true, trailing = true}: ThrottleOptions = {}
+): ThrottledFunction<Parameters<T>> {
+  let lastExecTime = 0;
+  let timerId: ReturnType<typeof setTimeout> | null = null;
+  let pendingArgs: Parameters<T> | null = null;
+  let context: ThisParameterType<T> | null = null;
+
+  const execute = () => {
+    if (pendingArgs) {
+      fn.apply(context, pendingArgs);
+      lastExecTime = Date.now();
+      timerId = null;
+      pendingArgs = null;
+      context = null;
+    }
+  };
+
+  function throttled(this: ThisParameterType<T>, ...args: Parameters<T>): ReturnType<T> | void {
+    const currentTime = Date.now();
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    context = this;
+    pendingArgs = args;
+
+    const remaining = delay - (currentTime - lastExecTime);
+
+    if (leading && lastExecTime === 0) {
+      execute();
+      return;
+    }
+
+    if (timerId) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+
+    if (remaining <= 0) {
+      execute();
+    } else if (trailing) {
+      timerId = setTimeout(execute, remaining);
+    }
+  }
+
+  throttled.cancel = () => {
+    if (timerId) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+    lastExecTime = 0;
+    pendingArgs = null;
+  };
+
+  return throttled as ThrottledFunction<Parameters<T>>;
+}
